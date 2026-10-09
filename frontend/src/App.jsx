@@ -23,8 +23,25 @@ export default function App() {
           <Routes>
 
             <Route path="/" element={<Navigate to="/form-masuk" replace />} />
-            <Route path="/form-masuk" element={<FormMasuk />} />
-            <Route path="/form-keluar" element={<FormKeluar />} />
+            {/* <Route path="/form-masuk" element={<FormMasuk />} />
+            <Route path="/form-keluar" element={<FormKeluar />} /> */}
+            {/* Proteksi Lokasi khusus untuk pengunjung */}
+            <Route 
+              path="/form-masuk" 
+              element={
+                <ProteksiLokasi>
+                  <FormMasuk />
+                </ProteksiLokasi>
+              } 
+            />
+            <Route 
+              path="/form-keluar" 
+              element={
+                <ProteksiLokasi>
+                  <FormKeluar />
+                </ProteksiLokasi>
+              } 
+            />
             <Route path="/status/:id" element={<StatusKunjungan />} />
             <Route path="/login" element={<Login />} />
 
