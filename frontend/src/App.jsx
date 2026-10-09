@@ -4,6 +4,7 @@ import { AutentikasiProvider } from "./context/AutentikasiAdminContext";
 
 import ProtectedRoute from "./components/ProteksiRute";
 import AdminLayout from "./components/AdminLayout";
+import ProteksiLokasi from "./components/ProteksiLokasi"; // <--- TAMBAHKAN IMPORT INI
 
 import FormMasuk from "./pages/FormMasuk";
 import FormKeluar from "./pages/FormKeluar";
@@ -23,8 +24,7 @@ export default function App() {
           <Routes>
 
             <Route path="/" element={<Navigate to="/form-masuk" replace />} />
-            {/* <Route path="/form-masuk" element={<FormMasuk />} />
-            <Route path="/form-keluar" element={<FormKeluar />} /> */}
+
             {/* Proteksi Lokasi khusus untuk pengunjung */}
             <Route 
               path="/form-masuk" 
@@ -42,6 +42,7 @@ export default function App() {
                 </ProteksiLokasi>
               } 
             />
+
             <Route path="/status/:id" element={<StatusKunjungan />} />
             <Route path="/login" element={<Login />} />
 
