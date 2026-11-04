@@ -22,13 +22,25 @@ const WARNA_STATUS = {
   "Kunjungan Selesai": "#1c63d9",
 };
 
+// Tanggal "YYYY-MM-DD" versi WIB (Asia/Jakarta), tidak bergantung
+// pada timezone browser. Cocok dengan waktuMasukIso dari backend
+// (format ISO dengan offset +07:00).
+function kunciTanggalWib(tanggal) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(tanggal);
+}
+
 function ambilData7HariTerakhir(daftarTamu) {
   const hasil = [];
   for (let i = 6; i >= 0; i--) {
-    const tanggal = new Date();
-    tanggal.setDate(tanggal.getDate() - i);
-    const kunciTanggal = tanggal.toISOString().slice(0, 10);
+    const tanggal = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+    const kunciTanggal = kunciTanggalWib(tanggal);
     const label = tanggal.toLocaleDateString("id-ID", {
+      timeZone: "Asia/Jakarta",
       day: "2-digit",
       month: "2-digit",
     });
@@ -68,7 +80,7 @@ export default function AdminDashboard() {
   }, [daftarTamu]);
 
   const totalHariIni = useMemo(() => {
-    const kunciHariIni = new Date().toISOString().slice(0, 10);
+    const kunciHariIni = kunciTanggalWib(new Date());
     return daftarTamu.filter(
       (v) => v.waktuMasukIso && v.waktuMasukIso.slice(0, 10) === kunciHariIni
     ).length;

@@ -10,10 +10,11 @@
 // selama transaksi berjalan — aman dari race condition walau ada beberapa
 // submit bersamaan.
 
+const { bagianTanggalWib } = require("./formatTanggal");
+
+// Tanggal untuk ID selalu memakai tanggal WIB, bukan tanggal server (UTC).
 async function formatTanggalId(date) {
-  const dd = String(date.getDate()).padStart(2, "0");
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const yyyy = date.getFullYear();
+  const { dd, mm, yyyy } = bagianTanggalWib(date);
   return `${dd}${mm}${yyyy}`;
 }
 

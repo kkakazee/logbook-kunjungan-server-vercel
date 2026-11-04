@@ -88,7 +88,7 @@ async function buat({ namaTamu, unitKerja, keperluan }) {
          status,
          waktu_masuk
        )
-       VALUES (?, ?, ?, 'Menunggu Persetujuan', NOW())`,
+       VALUES (?, ?, ?, 'Menunggu Persetujuan', UTC_TIMESTAMP())`,
       [id, unitKerja, keperluan]
     );
 
@@ -146,7 +146,7 @@ async function catatKeluar(id) {
     `UPDATE pengunjung
      SET
        status = 'Kunjungan Selesai',
-       waktu_keluar = NOW()
+       waktu_keluar = UTC_TIMESTAMP()
      WHERE id_pengunjung = ?`,
     [id]
   );

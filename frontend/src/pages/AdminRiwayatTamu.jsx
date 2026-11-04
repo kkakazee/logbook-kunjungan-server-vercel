@@ -72,6 +72,14 @@ function HeaderKalender({
   );
 }
 
+// Tanggal yang dipilih di DatePicker (Date lokal) -> "YYYY-MM-DD"
+function keYmd(tanggal) {
+  const yyyy = tanggal.getFullYear();
+  const mm = String(tanggal.getMonth() + 1).padStart(2, "0");
+  const dd = String(tanggal.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function AdminRiwayatTamu() {
   useDocumentTitle("Riwayat Tamu — BBMKG Wilayah II");
   const [daftarTamu, setDaftarTamu] = useState([]);
@@ -117,13 +125,12 @@ export default function AdminRiwayatTamu() {
       const waktuKunjungan = new Date(v.waktuMasukIso).getTime();
 
       if (dariTanggal) {
-        const awalHari = new Date(dariTanggal);
-        awalHari.setHours(0, 0, 0, 0);
+        // Batas hari dihitung dalam WIB, bukan timezone browser
+        const awalHari = new Date(`${keYmd(dariTanggal)}T00:00:00+07:00`);
         if (waktuKunjungan < awalHari.getTime()) return false;
       }
       if (sampaiTanggal) {
-        const akhirHari = new Date(sampaiTanggal);
-        akhirHari.setHours(23, 59, 59, 999);
+        const akhirHari = new Date(`${keYmd(sampaiTanggal)}T23:59:59.999+07:00`);
         if (waktuKunjungan > akhirHari.getTime()) return false;
       }
       return true;
@@ -200,7 +207,13 @@ export default function AdminRiwayatTamu() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Tamu");
 
-    const namaFile = `riwayat-tamu-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const tanggalWib = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const namaFile = `riwayat-tamu-${tanggalWib}.xlsx`;
     XLSX.writeFile(workbook, namaFile);
   }
 
