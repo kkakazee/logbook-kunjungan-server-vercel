@@ -1042,160 +1042,270 @@ input::placeholder, textarea::placeholder { color: #9aa4b2; }
 /* =========================================================
    Verifikasi lokasi (ProteksiLokasi)
    ========================================================= */
-.lokasi-layar {
+.lok-layar {
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 20px 16px;
   box-sizing: border-box;
   background:
-    linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
-    linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px) 0 0 / 2.5rem 2.5rem,
-    var(--navy);
-  color: #fff;
+    radial-gradient(circle at 15% 0%, rgba(47, 111, 196, .14), transparent 45%),
+    radial-gradient(circle at 100% 100%, rgba(31, 157, 85, .10), transparent 40%),
+    var(--bg);
 }
-.lokasi-konten { max-width: 340px; text-align: center; }
-.lokasi-konten h3 { margin: 10px 0 6px; font-size: 20px; }
-.lokasi-konten p { margin: 0; font-size: 13px; line-height: 1.6; color: #a9b6cc; }
-.lokasi-radar {
-  position: relative;
-  width: 112px;
-  height: 112px;
-  margin: 0 auto 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.lokasi-radar-ping {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(47, 111, 196, .35);
-  animation: lokasi-ping 1.4s cubic-bezier(0, 0, .2, 1) infinite;
-}
-.lokasi-radar-inti {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--primary-2);
-  border: 2px solid #9cc0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(47, 111, 196, .5);
-}
-.lokasi-radar-inti svg { width: 28px; height: 28px; }
-@keyframes lokasi-ping {
-  75%, 100% { transform: scale(1.6); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lokasi-radar-ping { animation: none; }
-}
-.lokasi-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  color: #9cc0f0;
-  background: rgba(15, 46, 92, .8);
-  border: 1px solid rgba(156, 192, 240, .3);
-}
-.lokasi-kartu {
+.lok-kartu {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   background: var(--surface);
-  color: var(--text);
-  border-radius: 18px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+  animation: lok-masuk .35s ease both;
 }
-.lokasi-kartu-header {
+@keyframes lok-masuk { from { opacity: 0; transform: translateY(10px); } }
+
+.lok-merek {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
-  background: linear-gradient(90deg, var(--danger), #b8262f);
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.lok-merek-ikon {
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 12px;
+  display: grid; place-items: center;
   color: #fff;
+  background: linear-gradient(135deg, var(--primary-2), var(--primary));
 }
-.lokasi-kartu-header h2 { margin: 0; font-size: 17px; }
-.lokasi-kartu-header p { margin: 2px 0 0; font-size: 12px; opacity: .85; }
-.lokasi-ikon-header {
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, .15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.lok-merek-ikon svg { width: 20px; height: 20px; }
+.lok-merek strong { display: block; font-size: 14px; }
+.lok-merek span { font-size: 12px; color: var(--muted); }
+
+.lok-isi { padding: 22px 20px 20px; display: grid; gap: 16px; }
+.lok-judul { text-align: center; display: grid; justify-items: center; gap: 8px; }
+.lok-judul h2 { margin: 0; font-size: 20px; line-height: 1.3; }
+.lok-judul p { margin: 0; font-size: 13.5px; color: var(--muted); line-height: 1.55; max-width: 340px; }
+
+.lok-chip {
+  display: inline-flex; align-items: center;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase;
 }
-.lokasi-ikon-header svg { width: 24px; height: 24px; }
-.lokasi-kartu-isi { padding: 20px; display: grid; gap: 16px; }
-.lokasi-kartu-isi .btn { width: 100%; }
-.lokasi-jarak {
-  padding: 14px;
-  border-radius: 12px;
+.lok-chip-merah { color: var(--danger); background: var(--danger-bg); }
+.lok-chip-kuning { color: var(--warning); background: var(--warning-bg); }
+.lok-merah { color: var(--danger); fill: var(--danger); }
+.lok-hijau { color: var(--success); fill: var(--success); }
+.lok-kuning { color: var(--warning); }
+
+.lok-ikon-besar {
+  width: 56px; height: 56px;
+  border-radius: 18px;
+  display: grid; place-items: center;
+}
+.lok-ikon-besar svg { width: 28px; height: 28px; }
+.lok-ikon-kuning { color: var(--warning); background: var(--warning-bg); }
+
+/* ---- Peta jarak ---- */
+.lok-peta {
+  width: 100%;
+  height: auto;
+  display: block;
+  color: var(--primary);
+  background: linear-gradient(180deg, #f7f9fd, #eef3fa);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+.lok-peta-teks { font-size: 11px; font-weight: 700; fill: var(--muted); font-family: inherit; }
+.lok-peta-label { font-size: 12px; font-weight: 800; fill: #fff; font-family: inherit; }
+.lok-zona-garis { animation: lok-putar-garis 20s linear infinite; }
+.lok-garis { animation: lok-alir 1s linear infinite; }
+.lok-denyut { transform-box: fill-box; transform-origin: center; animation: lok-denyut 1.6s ease-out infinite; }
+@keyframes lok-putar-garis { to { stroke-dashoffset: -90; } }
+@keyframes lok-alir { to { stroke-dashoffset: -16; } }
+@keyframes lok-denyut { from { transform: scale(1); opacity: .5; } to { transform: scale(3); opacity: 0; } }
+
+.lok-statistik {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.lok-statistik > div {
+  padding: 10px 8px;
+  border-radius: 14px;
   background: var(--bg);
   border: 1px solid var(--border);
+  text-align: center;
 }
-.lokasi-jarak-baris {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
+.lok-statistik span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.lok-statistik strong { font-size: 16px; font-weight: 800; }
+
+.lok-catatan {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--info-bg);
+  color: var(--primary-dark);
+  font-size: 13px;
+  line-height: 1.55;
 }
-.lokasi-jarak-anda { font-size: 22px; color: var(--danger); }
-.lokasi-jarak-batas { font-size: 15px; color: var(--success); }
-.lokasi-progress {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--border);
+
+.lok-tombol { display: grid; gap: 10px; }
+.lok-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.lok-btn svg, .lok-btn-garis svg { width: 18px; height: 18px; }
+.lok-btn-garis {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  color: var(--primary);
+  font-weight: 700; font-size: 13px;
+  text-decoration: none;
+  transition: background .15s ease, border-color .15s ease;
+}
+.lok-btn-garis:hover { background: var(--info-bg); border-color: var(--primary-2); }
+
+/* ---- Petunjuk izin ---- */
+.lok-tab {
+  display: grid; grid-template-columns: 1fr 1fr;
+  padding: 4px; gap: 4px;
+  border-radius: 12px;
+  background: var(--bg);
+}
+.lok-tab button {
+  border: 0; border-radius: 9px;
+  padding: 9px 6px;
+  font-size: 12.5px; font-weight: 700;
+  color: var(--muted); background: transparent; cursor: pointer;
+}
+.lok-tab button.aktif { color: var(--primary); background: var(--surface); box-shadow: 0 2px 8px rgba(16, 40, 80, .08); }
+.lok-langkah {
+  margin: 0; padding: 0 0 0 4px;
+  list-style: none; counter-reset: langkah;
+  display: grid; gap: 10px;
+  font-size: 13.5px; line-height: 1.5; color: var(--text);
+}
+.lok-langkah li { position: relative; padding-left: 34px; counter-increment: langkah; }
+.lok-langkah li::before {
+  content: counter(langkah);
+  position: absolute; left: 0; top: -1px;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 800;
+  color: var(--primary); background: var(--info-bg);
+}
+.lok-langkah-titik li::before { content: "\2022"; font-size: 16px; }
+
+/* ---- Memuat (radar) ---- */
+.lok-memuat { text-align: center; justify-items: center; padding-top: 28px; }
+.lok-memuat h2 { margin: 4px 0 0; font-size: 19px; }
+.lok-memuat p { margin: 0; font-size: 13px; color: var(--muted); }
+.lok-radar {
+  position: relative;
+  width: 132px; height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--info-bg) 0 38%, #f2f6fc 39% 100%);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
-.lokasi-progress > div {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--warning), var(--danger));
+.lok-radar-cincin {
+  position: absolute; inset: 0; margin: auto;
+  width: 40%; height: 40%;
+  border-radius: 50%;
+  border: 2px solid var(--primary-2);
+  animation: lok-cincin 2s ease-out infinite;
 }
-.lokasi-pesan {
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--danger-bg);
-  color: var(--danger);
-  font-size: 13px;
-  font-weight: 600;
+.lok-radar-cincin.lok-tunda { animation-delay: 1s; }
+.lok-radar-sapuan {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(47, 111, 196, .35), rgba(47, 111, 196, 0) 28%, transparent);
+  animation: lok-sapu 2.4s linear infinite;
+}
+.lok-radar-titik {
+  position: absolute; inset: 0; margin: auto;
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-2), var(--primary));
+  box-shadow: 0 8px 20px rgba(28, 78, 148, .35);
+}
+.lok-radar-titik svg { width: 22px; height: 22px; }
+@keyframes lok-cincin { from { transform: scale(.6); opacity: .9; } to { transform: scale(2.6); opacity: 0; } }
+@keyframes lok-sapu { to { transform: rotate(360deg); } }
+
+.lok-progres {
+  list-style: none; margin: 6px 0 0; padding: 0;
+  display: grid; gap: 8px; text-align: left;
+  font-size: 13px; color: var(--muted);
+}
+.lok-progres li {
+  display: flex; align-items: center; gap: 10px;
+  opacity: .35;
+  animation: lok-langkah-aktif .4s ease forwards;
+}
+.lok-progres li:nth-child(2) { animation-delay: 1.2s; }
+.lok-progres li:nth-child(3) { animation-delay: 2.4s; }
+.lok-progres li::before {
+  content: ""; width: 10px; height: 10px; border-radius: 50%;
+  border: 2px solid var(--primary-2);
+  border-right-color: transparent;
+  animation: lok-sapu .8s linear infinite;
+}
+@keyframes lok-langkah-aktif { to { opacity: 1; color: var(--text); } }
+
+.lok-kaki {
+  padding: 11px;
   text-align: center;
-  line-height: 1.5;
-}
-.lokasi-langkah-judul {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-.lokasi-langkah {
-  margin: 0;
-  padding-left: 18px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--muted);
-}
-.lokasi-kartu-footer {
-  padding: 10px;
-  text-align: center;
-  font-size: 10px;
-  letter-spacing: .1em;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
   color: var(--muted);
   background: var(--bg);
   border-top: 1px solid var(--border);
+}
+
+/* ---- Penanda lolos (muncul di atas form, lalu memudar) ---- */
+.lok-pill {
+  position: fixed;
+  left: 50%; bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px 10px 10px;
+  max-width: calc(100% - 32px);
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px; font-weight: 600;
+  box-shadow: 0 12px 30px rgba(15, 37, 71, .3);
+  animation: lok-pill 5s ease forwards;
+  pointer-events: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.lok-pill-ikon {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; flex-shrink: 0;
+  background: var(--success);
+}
+.lok-pill-ikon svg { width: 13px; height: 13px; }
+@keyframes lok-pill {
+  0% { opacity: 0; transform: translate(-50%, 16px); }
+  8%, 80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 8px); visibility: hidden; }
+}
+
+@media (max-width: 380px) {
+  .lok-statistik strong { font-size: 14px; }
+  .lok-judul h2 { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lok-kartu, .lok-zona-garis, .lok-garis, .lok-denyut, .lok-radar-cincin,
+  .lok-radar-sapuan, .lok-progres li, .lok-progres li::before { animation: none; }
+  .lok-progres li { opacity: 1; }
+  .lok-pill { animation-duration: .01s; animation-delay: 4s; }
 }
 
 .btn-simpan-link { display: block; margin: 10px auto 0; }
