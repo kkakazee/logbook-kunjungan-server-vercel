@@ -63,6 +63,13 @@ function ipKlien(req) {
   // Di Vercel, header x-real-ip diisi oleh edge Vercel (tidak bisa dipalsukan
   // klien). Di tempat lain pakai req.ip (mengikuti setting "trust proxy").
   if (process.env.VERCEL && req.get("x-real-ip")) return req.get("x-real-ip");
+  // Tunnel lokal (Cloudflare/Tailscale) di mesin yang sama: header hanya
+  // dipercaya bila koneksi memang datang dari 127.0.0.1, agar tidak bisa
+  // dipalsukan oleh klien yang terhubung langsung.
+  const dariLokal = ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(req.socket.remoteAddress);
+  if (config.ipHeader && dariLokal && req.get(config.ipHeader)) {
+    return req.get(config.ipHeader).split(",")[0].trim();
+  }
   return req.ip || "tanpa-ip";
 }
 

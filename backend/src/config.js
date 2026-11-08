@@ -42,9 +42,26 @@ function angka(nilai) {
 const lokasiLat = angka(env.LOKASI_LAT);
 const lokasiLng = angka(env.LOKASI_LNG);
 
+// "trust proxy" Express: Vercel/Render = 1 hop. Untuk PC/NAS di belakang
+// Cloudflare Tunnel / Tailscale Funnel yang berjalan di mesin yang sama,
+// pakai TRUST_PROXY=loopback.
+function bacaTrustProxy() {
+  const v = (env.TRUST_PROXY || "").trim();
+  if (!v) return produksi ? 1 : false;
+  if (v === "false") return false;
+  if (/^\d+$/.test(v)) return Number(v);
+  return v; // contoh: "loopback"
+}
+
 module.exports = {
   produksi,
   port: Number(env.PORT) || 3001,
+  // HOST=127.0.0.1 → aplikasi hanya bisa diakses lewat tunnel di PC itu
+  host: env.HOST || undefined,
+  trustProxy: bacaTrustProxy(),
+  // Header IP asli dari tunnel, misal "cf-connecting-ip" (Cloudflare).
+  // Hanya dipercaya jika request datang dari mesin yang sama (127.0.0.1).
+  ipHeader: (env.IP_HEADER || "").trim().toLowerCase() || null,
   jwtSecret,
   sesiJam: 8,
   allowedOrigins: (env.ALLOWED_ORIGINS || "")
@@ -58,6 +75,8 @@ module.exports = {
     password: wajib("DB_PASSWORD"),
     database: wajib("DB_NAME"),
     caCert: bacaCaCert(),
+    // DB_SSL=false untuk MySQL lokal di mesin yang sama (127.0.0.1)
+    ssl: env.DB_SSL !== "false",
   },
   // LOKASI_AKTIF=false mematikan cek lokasi sementara (uji coba dari luar kantor)
   lokasi:

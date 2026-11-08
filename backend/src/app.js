@@ -14,7 +14,7 @@ const app = express();
 
 app.disable("x-powered-by");
 // Di belakang proxy Vercel/Render, IP asli ada di X-Forwarded-For.
-app.set("trust proxy", config.produksi ? 1 : false);
+app.set("trust proxy", config.trustProxy);
 
 app.use(
   helmet({

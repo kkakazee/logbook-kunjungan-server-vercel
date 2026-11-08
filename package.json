@@ -14,7 +14,9 @@
     "build": "npm run build --prefix frontend",
     "start": "node backend/src/server.js",
     "db:migrasi": "node scripts/migrasi.js",
-    "admin:buat": "node scripts/buat-admin.js"
+    "admin:buat": "node scripts/buat-admin.js",
+    "db:backup": "node scripts/backup.js",
+    "db:impor": "node scripts/impor-backup.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

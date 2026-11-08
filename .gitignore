@@ -6,3 +6,5 @@ dist
 *.pem
 .vercel
 *.log
+backup/
+logs/

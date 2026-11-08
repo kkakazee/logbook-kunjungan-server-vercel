@@ -595,6 +595,17 @@ Halaman developer berisi:
 
 Aplikasi siap di-deploy ke **Vercel** (gratis) dengan database **Aiven MySQL**, atau ke Render/Railway/VPS sebagai server Node biasa. Lihat [DEPLOY.md](DEPLOY.md).
 
+Untuk menjalankan aplikasi **dan** database di **PC Windows yang menyala 24 jam** (akses dari mana saja lewat Tailscale Funnel / Cloudflare Tunnel, backup harian otomatis), lihat [deploy/windows/PANDUAN-PC-WINDOWS.md](deploy/windows/PANDUAN-PC-WINDOWS.md).
+
+Perintah database:
+
+| Perintah | Fungsi |
+| --- | --- |
+| `npm run db:migrasi` | Membuat/memperbarui tabel tanpa menghapus data |
+| `npm run db:backup -- <folder>` | Backup semua tabel ke `.sql` + `.json` |
+| `npm run db:impor -- <file.sql>` | Impor backup lalu migrasi (ditolak bila DB sudah berisi data, kecuali `--timpa`) |
+| `npm run admin:buat -- <user> "<Nama>" [--utama]` | Buat admin dengan password acak |
+
 
 
 ## Catatan Pengembangan

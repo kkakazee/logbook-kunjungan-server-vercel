@@ -37,6 +37,6 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-app.listen(config.port, () => {
-  console.log(`Server jalan di http://localhost:${config.port}`);
+app.listen(config.port, config.host, () => {
+  console.log(`Server jalan di http://${config.host || "localhost"}:${config.port}`);
 });

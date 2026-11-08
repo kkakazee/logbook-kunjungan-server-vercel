@@ -7,11 +7,16 @@
 const mysql = require("mysql2/promise");
 const config = require("./config");
 
-const ssl = config.db.caCert
-  ? { ca: config.db.caCert, rejectUnauthorized: true }
-  : { rejectUnauthorized: false };
+let ssl;
+if (!config.db.ssl) {
+  ssl = undefined; // MySQL lokal (127.0.0.1) — lalu lintas tidak keluar dari PC
+} else if (config.db.caCert) {
+  ssl = { ca: config.db.caCert, rejectUnauthorized: true };
+} else {
+  ssl = { rejectUnauthorized: false };
+}
 
-if (!config.db.caCert) {
+if (config.db.ssl && !config.db.caCert) {
   console.warn(
     "[PERINGATAN] DB_CA_CERT belum diisi — koneksi ke database terenkripsi " +
       "tetapi sertifikat server TIDAK diverifikasi (rawan MITM). " +
