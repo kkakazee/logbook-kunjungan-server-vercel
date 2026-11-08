@@ -595,7 +595,7 @@ Halaman developer berisi:
 
 Aplikasi siap di-deploy ke **Vercel** (gratis) dengan database **Aiven MySQL**, atau ke Render/Railway/VPS sebagai server Node biasa. Lihat [DEPLOY.md](DEPLOY.md).
 
-Untuk menjalankan aplikasi **dan** database di **PC Windows yang menyala 24 jam** (akses dari mana saja lewat Tailscale Funnel / Cloudflare Tunnel, backup harian otomatis), lihat [deploy/windows/PANDUAN-PC-WINDOWS.md](deploy/windows/PANDUAN-PC-WINDOWS.md).
+Untuk menjalankan aplikasi **dan** database di **PC Windows yang menyala 24 jam** dengan domain **https://logbook-tamu.jkbw2.my.id** (Cloudflare Tunnel, backup harian otomatis), lihat [deploy/windows/PANDUAN-PC-WINDOWS.md](deploy/windows/PANDUAN-PC-WINDOWS.md).
 
 Perintah database:
 
