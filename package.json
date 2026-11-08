@@ -1,9 +1,30 @@
 {
-  "name": "logbook-kunjungan-monolith",
-  "version": "1.0.0",
+  "name": "logbook-kunjungan-jarkom",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Logbook Kunjungan Tamu Ruangan Jarkom BBMKG Wilayah II",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "postinstall": "npm install --prefix backend && npm install --prefix frontend",
+    "postinstall": "npm install --prefix frontend",
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --watch backend/src/server.js",
+    "dev:web": "npm run dev --prefix frontend",
     "build": "npm run build --prefix frontend",
-    "start": "npm start --prefix backend"
+    "start": "node backend/src/server.js",
+    "db:migrasi": "node scripts/migrasi.js",
+    "admin:buat": "node scripts/buat-admin.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }

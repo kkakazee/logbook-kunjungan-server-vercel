@@ -11,8 +11,8 @@ export default function GantiPasswordModal({ onClose }) {
 
   async function tanganiSubmit(e) {
     e.preventDefault();
-    if (passwordBaru.length < 6) {
-      tampilkanToast("Password baru minimal 6 karakter.");
+    if (passwordBaru.length < 8 || !/[A-Za-z]/.test(passwordBaru) || !/[0-9]/.test(passwordBaru)) {
+      tampilkanToast("Password baru minimal 8 karakter dan mengandung huruf serta angka.");
       return;
     }
     if (passwordBaru !== konfirmasiPassword) {

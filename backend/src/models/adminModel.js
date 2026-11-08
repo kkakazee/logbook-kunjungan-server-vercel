@@ -1,78 +1,72 @@
-// models/adminModel.js
+// models/adminModel.js — semua query tabel `admin`.
 const pool = require("../database");
 
+const KOLOM = "id_admin, username, password, nama_petugas, role, sesi_versi";
+
 async function cariByUsername(username) {
-  const [baris] = await pool.query(
-    `SELECT id_admin, username, password, nama_petugas, role FROM admin WHERE username = ?`,
-    [username]
-  );
-  return baris.length ? baris[0] : null;
+  const [baris] = await pool.query(`SELECT ${KOLOM} FROM admin WHERE username = ?`, [username]);
+  return baris[0] || null;
 }
 
-async function updatePassword(username, passwordHashBaru) {
+async function cariById(id) {
+  const [baris] = await pool.query(`SELECT ${KOLOM} FROM admin WHERE id_admin = ?`, [id]);
+  return baris[0] || null;
+}
+
+// Ganti password sekaligus menaikkan sesi_versi → semua token lama batal.
+async function updatePassword(id, passwordHashBaru) {
   const [hasil] = await pool.query(
-    `UPDATE admin SET password = ? WHERE username = ?`,
-    [passwordHashBaru, username]
+    `UPDATE admin SET password = ?, sesi_versi = sesi_versi + 1 WHERE id_admin = ?`,
+    [passwordHashBaru, id]
   );
   return hasil.affectedRows > 0;
 }
 
-
-
 // Cari id_admin 3 digit terkecil yang belum dipakai — kalau 002 pernah
-// dihapus, admin baru berikutnya akan dapat "002" lagi, bukan lompat ke 004.
+// dihapus, admin baru berikutnya akan dapat "002" lagi.
 async function cariIdBerikutnya() {
   const [baris] = await pool.query(`SELECT id_admin FROM admin ORDER BY id_admin ASC`);
   const idTerpakai = new Set(baris.map((b) => b.id_admin));
   let n = 1;
-  while (idTerpakai.has(String(n).padStart(3, "0"))) {
-    n++;
-  }
+  while (idTerpakai.has(String(n).padStart(3, "0"))) n++;
+  if (n > 999) throw new Error("Slot id_admin sudah penuh (maks 999).");
   return String(n).padStart(3, "0");
 }
 
-
-
-// Admin baru hanya dibuat oleh admin utama dan langsung mendapatkan role
-// "petugas" tanpa melalui proses pendaftaran atau persetujuan.
-async function buat({ username, passwordHash, namaPetugas }) {
-  // Retry beberapa kali kalau ID kebetulan bentrok (jarang terjadi,
-  // cuma jaga-jaga kalau ada 2 admin dibuat nyaris bersamaan).
+// Admin baru dibuat oleh admin utama (role "petugas") atau lewat script
+// scripts/buat-admin.js (bisa role "utama").
+async function buat({ username, passwordHash, namaPetugas, role = "petugas" }) {
   for (let percobaan = 0; percobaan < 5; percobaan++) {
     const id = await cariIdBerikutnya();
     try {
       await pool.query(
         `INSERT INTO admin (id_admin, username, password, nama_petugas, role)
-         VALUES (?, ?, ?, ?, 'petugas')`,
-        [id, username, passwordHash, namaPetugas]
+         VALUES (?, ?, ?, ?, ?)`,
+        [id, username, passwordHash, namaPetugas, role]
       );
-      return { id, username, namaPetugas, role: "petugas" };
+      return { id, username, namaPetugas, role };
     } catch (err) {
-      if (err.code === "ER_DUP_ENTRY") continue; // coba id berikutnya
+      // Bentrok id (dibuat bersamaan) → coba id berikutnya.
+      // Bentrok username → lempar ke pemanggil.
+      if (err.code === "ER_DUP_ENTRY" && !String(err.message).includes("username")) continue;
       throw err;
     }
   }
   throw new Error("Gagal generate id_admin, coba lagi.");
 }
 
-
-
-// Mengambil seluruh data admin untuk ditampilkan oleh admin utama.
 async function cariSemuaAdmin() {
   const [baris] = await pool.query(
-    `SELECT id_admin, username, nama_petugas, role
-     FROM admin
-     ORDER BY id_admin ASC`
+    `SELECT id_admin, username, nama_petugas, role FROM admin ORDER BY id_admin ASC`
   );
   return baris;
 }
 
-
-
-// Menghapus akun admin berdasarkan id_admin.
-async function hapusAdmin(id) {
+// Hanya menghapus admin petugas — admin utama tidak bisa terhapus walau
+// ada bug di controller.
+async function hapusPetugas(id) {
   const [hasil] = await pool.query(
-    `DELETE FROM admin WHERE id_admin = ?`,
+    `DELETE FROM admin WHERE id_admin = ? AND role <> 'utama'`,
     [id]
   );
   return hasil.affectedRows > 0;
@@ -80,8 +74,9 @@ async function hapusAdmin(id) {
 
 module.exports = {
   cariByUsername,
+  cariById,
   buat,
   updatePassword,
   cariSemuaAdmin,
-  hapusAdmin,
+  hapusPetugas,
 };

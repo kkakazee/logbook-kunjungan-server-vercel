@@ -75,7 +75,9 @@ Sistem terdiri dari halaman publik yang digunakan tamu untuk melakukan pencatata
 
 * **Form Keluar** — tamu melakukan konfirmasi ketika selesai berkunjung.
 
-* **Penyimpanan Nomor Kunjungan** — nomor kunjungan terakhir disimpan pada browser menggunakan `localStorage` untuk membantu mempertahankan akses ke kunjungan yang masih aktif.
+* **Kode Akses** — setiap kunjungan mendapat kode akses 6 karakter yang dibutuhkan untuk cek status dan konfirmasi keluar.
+
+* **Penyimpanan Nomor Kunjungan** — nomor kunjungan dan kode akses terakhir disimpan pada browser menggunakan `localStorage` untuk membantu mempertahankan akses ke kunjungan yang masih aktif.
 
 * **Pengecekan Kunjungan Aktif** — sistem memeriksa nomor kunjungan yang tersimpan ketika tamu kembali membuka Form Masuk. Jika kunjungan masih berstatus `Menunggu Persetujuan` atau `Diterima`, tamu diarahkan kembali ke proses kunjungan yang masih aktif.
 
@@ -119,7 +121,7 @@ Sistem terdiri dari halaman publik yang digunakan tamu untuk melakukan pencatata
 
 * **Profil Admin** — admin dapat melihat data akunnya, mengganti password, dan melakukan logout.
 
-* **Pembaruan Data Realtime** — halaman admin menerima perubahan data kunjungan melalui Socket.IO tanpa perlu melakukan refresh manual.
+* **Pembaruan Data Realtime** — halaman admin menerima perubahan data kunjungan melalui polling otomatis tanpa perlu melakukan refresh manual.
 
 
 
@@ -221,11 +223,11 @@ Kunjungan Selesai
 | Frontend | React.js, Vite, React Router, Axios, Recharts, React Datepicker, SheetJS |
 | Backend | Node.js, Express.js |
 | Arsitektur Backend | MVC |
-| Database | MySQL |
-| Autentikasi | JWT + bcrypt |
+| Database | MySQL (Aiven) |
+| Autentikasi | JWT (cookie httpOnly) + bcrypt |
 | HTTP Client | Axios |
 | Export Data | SheetJS (`xlsx`) |
-| Realtime Communication | Socket.IO |
+| Realtime | Polling (kompatibel Vercel) |
 
 
 
@@ -234,189 +236,42 @@ Kunjungan Selesai
 ## Struktur Folder
 
 ```text
-logbook-kunjungan-tamu-ruangan-jarkom-bbmkg2/
-│
-├── backend/
-│   ├── src/
-│   │   ├── controllers/       ← logika request & response
-│   │   ├── middleware/        ← autentikasi & pembatasan akses
-│   │   ├── models/            ← query database
-│   │   ├── routes/            ← endpoint API
-│   │   ├── utils/             ← fungsi bantuan & Socket.IO
-│   │   ├── database.js        ← koneksi pool MySQL
-│   │   └── index.js           ← entry point Express
-│   │
-│   ├── .env                   ← konfigurasi database & JWT
-│   ├── .gitignore
-│   └── package.json
-│
-├── frontend/
-│   ├── src/
-│   │   ├── api/               ← komunikasi dengan backend
-│   │   ├── components/        ← komponen antarmuka
-│   │   ├── context/           ← context aplikasi & autentikasi
-│   │   ├── hooks/             ← custom hooks
-│   │   ├── pages/             ← halaman tamu & admin
-│   │   ├── App.jsx            ← routing aplikasi
-│   │   └── index.css          ← stylesheet utama
-│   │
-│   ├── public/
-│   ├── vite.config.js
-│   └── package.json
-│   
-├── kunjungan_jarkom.sql       ← skema database
-├── package.json
-├── package-lock.json
-└── README.md
+repo/
+├── api/index.js            ← entry point Vercel Serverless Function
+├── backend/src/
+│   ├── controllers/        ← logika request & response
+│   ├── middleware/         ← autentikasi, rate limit, anti-CSRF, error handler
+│   ├── models/             ← query database
+│   ├── routes/             ← endpoint API
+│   ├── utils/              ← kode akses, lokasi, validasi, tanggal, cookie
+│   ├── app.js              ← aplikasi Express
+│   ├── server.js           ← server lokal / Render / VPS
+│   ├── config.js           ← environment variable
+│   └── database.js         ← pool MySQL (Aiven, TLS)
+├── frontend/               ← React + Vite
+├── database/skema.sql      ← skema database
+├── scripts/                ← migrasi & pembuatan admin
+├── vercel.json
+├── .env.example
+├── DEPLOY.md               ← panduan deploy + daftar perbaikan keamanan
+└── package.json
 ```
-
-
 
 
 
 ## Instalasi
 
-### Persiapan
+Lihat **[DEPLOY.md](DEPLOY.md)** untuk langkah lengkap (lokal, Vercel, Aiven).
 
-Pastikan perangkat telah memiliki:
-
-* **Node.js** versi 18 atau lebih baru
-
-* **MySQL**
-
-* **npm**
-
-MySQL dapat dijalankan melalui XAMPP, Laragon, atau instalasi MySQL secara langsung.
-
-
-
-
-
-### 1. Setup Database
-
-1. Buat database baru melalui phpMyAdmin atau MySQL.
-
-2. Import file `kunjungan_jarkom.sql` yang berada di root project.
-
-3. Pastikan tabel berikut berhasil dibuat:
-
-```text
-admin
-pengunjung
-pengunjung_nama
-nomor_kunjungan
-```
-
-
-
-
-
-### 2. Setup Backend
-
-Masuk ke folder backend:
+Ringkas (lokal):
 
 ```bash
-cd backend
-npm install
+npm install            # install backend + frontend
+cp .env.example .env   # isi data Aiven + JWT_SECRET
+npm run db:migrasi     # buat/perbarui tabel
+npm run admin:buat -- admin "Admin Utama" --utama
+npm run dev            # API :3001 + frontend :5173
 ```
-
-Buat file `.env` di dalam folder `backend/` dan isi konfigurasi sesuai database yang digunakan:
-
-```env
-DB_HOST=Host Database Anda
-DB_USER=User Database Anda
-DB_PASSWORD=Password Database Anda
-DB_NAME=Nama Database Anda
-PORT=3001
-JWT_SECRET=ganti-dengan-random-string-panjang
-```
-
-Kemudian jalankan backend:
-
-```bash
-npm run dev
-```
-
-atau untuk menjalankan tanpa nodemon:
-
-```bash
-npm start
-```
-
-Backend secara default berjalan pada:
-
-```text
-http://localhost:3001
-```
-
-Untuk memeriksa koneksi server, buka:
-
-```text
-http://localhost:3001/api/ping
-```
-
-Jika berhasil, server akan mengembalikan:
-
-```json
-{
-  "ok": true
-}
-```
-
-
-
-
-
-### 3. Setup Frontend
-
-Buka terminal baru:
-
-```bash
-cd frontend
-npm install
-```
-
-Jalankan development server:
-
-```bash
-npm run dev
-```
-
-Frontend secara default dapat diakses melalui:
-
-```text
-http://localhost:5173
-```
-
-
-
-
-
-### 4. Menjalankan Backend dan Frontend Bersamaan
-
-Jika ingin menjalankan keduanya dari root project, gunakan `concurrently`:
-
-```bash
-npm install --save-dev concurrently
-```
-
-Kemudian tambahkan script berikut pada `package.json` root:
-
-```json
-{
-  "scripts": {
-    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
-  }
-}
-```
-
-Setelah itu jalankan dari root project:
-
-```bash
-npm run dev
-```
-
-
 
 
 
@@ -462,15 +317,17 @@ Halaman `/admin/admin-list-petugas-admin` hanya dapat diakses oleh Admin Utama.
 Base URL:
 
 ```text
-http://localhost:3001/api/pengunjung
+/api/pengunjung
 ```
 
 | Method | Path | Akses | Fungsi |
 | ------- | ------------- | ------------- | ---------------------------------- |
-| `POST` | `/` | Publik | Membuat kunjungan baru |
-| `GET` | `/:id` | Publik | Melihat data/status satu kunjungan |
-| `POST` | `/:id/keluar` | Publik | Mencatat tamu keluar |
+| `POST` | `/` | Publik | Membuat kunjungan baru (mengembalikan `kodeAkses`) |
+| `POST` | `/:id/cek` | Publik + kode akses | Melihat status kunjungan sendiri |
+| `POST` | `/:id/keluar` | Publik + kode akses | Mencatat tamu keluar |
 | `GET` | `/` | Admin | Mengambil seluruh data kunjungan |
+| `GET` | `/versi` | Admin | Penanda perubahan data (polling) |
+| `POST` | `/:id/keluar-petugas` | Admin Petugas | Mencatat tamu keluar (bila tamu kehilangan kode akses) |
 | `PATCH` | `/:id/status` | Admin Petugas | Menerima atau menolak kunjungan |
 
 Saat melakukan penolakan, endpoint status dapat menerima alasan penolakan.
@@ -486,12 +343,13 @@ Nama petugas verifikasi diambil otomatis dari sesi login/JWT.
 Base URL:
 
 ```text
-http://localhost:3001/api/admin
+/api/admin
 ```
 
 | Method | Path | Akses | Fungsi |
 | -------- | ----------------- | ----------- | ------------------------------ |
-| `POST` | `/login` | Publik | Login admin |
+| `POST` | `/login` | Publik | Login admin (set cookie httpOnly) |
+| `POST` | `/logout` | Publik | Hapus cookie sesi |
 | `GET` | `/saya` | Admin | Mengambil data sesi admin |
 | `PATCH` | `/ganti-password` | Admin | Mengganti password sendiri |
 | `GET` | `/semua` | Admin Utama | Mengambil seluruh daftar admin |
@@ -596,29 +454,16 @@ Contoh:
 
 ## Keamanan
 
-Sistem menggunakan beberapa mekanisme keamanan:
+Ringkasan (detail & daftar celah yang diperbaiki ada di [DEPLOY.md](DEPLOY.md#perubahan-keamanan-hasil-audit)):
 
-* Password admin menggunakan hashing bcrypt.
-
-* Autentikasi panel admin menggunakan JWT.
-
-* Endpoint yang membutuhkan autentikasi dilindungi middleware.
-
-* Fungsi pengelolaan akun admin dibatasi untuk Admin Utama.
-
-* Admin Utama tidak dapat dihapus.
-
-* Tamu tidak dapat mengakses endpoint data seluruh kunjungan.
-
-* Validasi dilakukan pada backend sebelum data diproses.
-
-* Nama petugas verifikasi diambil dari sesi admin/JWT, bukan dari input bebas pengguna.
-
-* Password database dan `JWT_SECRET` disimpan melalui file `.env`.
-
-* Admin Petugas tidak dapat mengakses fungsi pengelolaan akun admin.
-
-
+* Password admin di-hash bcrypt (cost 12); minimal 8 karakter, huruf + angka.
+* Sesi admin: JWT di cookie **httpOnly + Secure + SameSite=Strict**, divalidasi ulang ke database tiap request; ganti password membatalkan semua sesi lama.
+* Tamu hanya bisa melihat/mengakhiri kunjungannya sendiri dengan **kode akses 6 karakter**.
+* Rate limit login & form tamu (tersimpan di database).
+* Anti-CSRF (cek Origin), CORS same-origin, security headers (CSP, HSTS, X-Frame-Options).
+* Koneksi database TLS terverifikasi (`DB_CA_CERT`).
+* Validasi & batas panjang input di backend, error handler tanpa bocoran detail.
+* Rahasia (`.env`) tidak pernah di-commit — lihat `.env.example`.
 
 
 
@@ -670,28 +515,10 @@ npm install xlsx
 
 ## Realtime Update
 
-Sistem menggunakan Socket.IO untuk memberikan pembaruan data secara realtime.
+Vercel (serverless) tidak mendukung WebSocket, sehingga Socket.IO diganti **polling ringan**:
 
-Event yang digunakan:
-
-```text
-kunjungan:baru
-kunjungan:diubah
-```
-
-Event `kunjungan:baru` digunakan ketika terdapat kunjungan baru.
-
-Event `kunjungan:diubah` digunakan ketika data kunjungan mengalami perubahan, seperti:
-
-* Kunjungan diterima.
-
-* Kunjungan ditolak.
-
-* Tamu melakukan proses keluar.
-
-Dengan mekanisme ini, perubahan status dapat diterima oleh halaman yang sedang terbuka tanpa harus melakukan refresh secara manual.
-
-
+* Halaman admin memanggil `GET /api/pengunjung/versi` setiap 5 detik (hanya saat tab aktif). Jika versi berubah, data dimuat ulang.
+* Halaman status tamu memeriksa statusnya sendiri setiap 8 detik selama kunjungan masih aktif.
 
 
 
@@ -766,39 +593,13 @@ Halaman developer berisi:
 
 ## Deployment
 
-Aplikasi dirancang agar dapat digunakan pada jaringan internal BBMKG.
-
-Deployment dapat dilakukan pada:
-
-* Komputer server
-
-* Server internal
-
-* NAS
-
-* Infrastruktur jaringan lokal lainnya
-
-Untuk deployment pada NAS, seluruh folder project dapat dipindahkan ke NAS dan dijalankan sesuai konfigurasi server yang digunakan.
-
-Akses panel admin dapat dibatasi melalui:
-
-* Jaringan internal
-
-* Firewall
-
-* Reverse proxy
-
-* Konfigurasi web server
-
-Pembatasan jaringan bukan pengganti autentikasi aplikasi. JWT dan pembatasan role tetap digunakan pada aplikasi.
-
-
+Aplikasi siap di-deploy ke **Vercel** (gratis) dengan database **Aiven MySQL**, atau ke Render/Railway/VPS sebagai server Node biasa. Lihat [DEPLOY.md](DEPLOY.md).
 
 
 
 ## Catatan Pengembangan
 
-* File `.env` tidak disertakan dalam repository dan harus dibuat sendiri pada komputer/server yang menjalankan backend.
+* File `.env` tidak disertakan dalam repository. Salin dari `.env.example` (lokal) atau isi Environment Variables di Vercel.
 
 * Jangan menyimpan password database atau `JWT_SECRET` secara langsung di source code.
 
@@ -826,7 +627,7 @@ Pembatasan jaringan bukan pengganti autentikasi aplikasi. JWT dan pembatasan rol
 
 * Detail kunjungan ditampilkan melalui modal tanpa harus berpindah halaman.
 
-* Perubahan data kunjungan dapat dikirim secara realtime menggunakan Socket.IO.
+* Perubahan data kunjungan diperbarui otomatis melalui polling (kompatibel Vercel).
 
 * Penentuan tanggal berjalan menggunakan zona waktu `Asia/Jakarta`.
 

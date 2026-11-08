@@ -14,8 +14,8 @@ export default function TambahAdminModal({ onClose, onBerhasil }) {
   function tanganiSubmit(e) {
     e.preventDefault();
 
-    if (password.length < 6) {
-      tampilkanToast("Password minimal 6 karakter.");
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      tampilkanToast("Password minimal 8 karakter dan mengandung huruf serta angka.");
       return;
     }
 
@@ -82,7 +82,7 @@ export default function TambahAdminModal({ onClose, onBerhasil }) {
               id="passwordBaruAdmin"
               type="password"
               required
-              placeholder="Minimal 6 karakter"
+              placeholder="Min. 8 karakter, huruf + angka"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

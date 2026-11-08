@@ -3,7 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import * as XLSX from "xlsx";
 import { muatDataTamu } from "../api/storage";
-import socket from "../api/frontendSocket";
+import realtime from "../api/realtime";
 import StatusBadge from "../components/StatusBadge";
 import DetailKunjunganModal from "../components/DetailKunjunganModal";
 import useDocumentTitle from "../hooks/useDocumentTitle";
@@ -109,12 +109,12 @@ export default function AdminRiwayatTamu() {
       muatUlang();
     }
 
-    socket.on("kunjungan:baru", tanganiPerubahan);
-    socket.on("kunjungan:diubah", tanganiPerubahan);
+    realtime.on("kunjungan:baru", tanganiPerubahan);
+    realtime.on("kunjungan:diubah", tanganiPerubahan);
 
     return () => {
-      socket.off("kunjungan:baru", tanganiPerubahan);
-      socket.off("kunjungan:diubah", tanganiPerubahan);
+      realtime.off("kunjungan:baru", tanganiPerubahan);
+      realtime.off("kunjungan:diubah", tanganiPerubahan);
     };
 
   }, []);

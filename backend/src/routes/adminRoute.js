@@ -1,21 +1,29 @@
 // routes/adminRoute.js
-
 const express = require("express");
+const adminController = require("../controllers/adminController");
+const { verifikasiToken, hanyaUtama } = require("../middleware/autentikasi");
+const { batasiRate } = require("../middleware/keamanan");
 
 const router = express.Router();
 
-const adminController = require("../controllers/adminController");
+// Publik — dibatasi 20 percobaan / 15 menit per IP
+router.post(
+  "/login",
+  batasiRate({ nama: "login-ip", maks: 20, detik: 15 * 60 }),
+  adminController.login
+);
+router.post("/logout", adminController.logout);
 
-const { verifikasiToken, hanyaUtama } = require("../middleware/autentikasi");
-
-// Untuk akses fungsi login
-router.post("/login", adminController.login);
-
-// Untuk akses fungsi data admin dan perubahan password setelah login (Wajib sudah login)
+// Wajib login
 router.get("/saya", verifikasiToken, adminController.ambilSaya);
-router.patch("/ganti-password", verifikasiToken, adminController.gantiPassword);
+router.patch(
+  "/ganti-password",
+  verifikasiToken,
+  batasiRate({ nama: "ganti-pw", maks: 10, detik: 15 * 60, kunci: (req) => req.admin.id }),
+  adminController.gantiPassword
+);
 
-// Untuk akses fungsi pengelolaan admin yang hanya dapat dilakukan oleh Admin Utama (Wajib sudah login sebagai Admin Utama)
+// Wajib login sebagai Admin Utama
 router.get("/semua", verifikasiToken, hanyaUtama, adminController.ambilSemuaAdmin);
 router.post("/tambah", verifikasiToken, hanyaUtama, adminController.tambahAdmin);
 router.delete("/:id", verifikasiToken, hanyaUtama, adminController.hapusAdmin);

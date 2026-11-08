@@ -22,9 +22,9 @@ export default function ProfileMenu() {
     return () => document.removeEventListener("mousedown", tanganiKlikDiLuar);
   }, []);
 
-  function tanganiLogout() {
+  async function tanganiLogout() {
     setMenuTerbuka(false);
-    logout();
+    await logout();
     tampilkanToast("Anda telah logout.");
     navigate("/login");
   }

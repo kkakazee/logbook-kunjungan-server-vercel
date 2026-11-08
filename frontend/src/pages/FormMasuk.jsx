@@ -8,9 +8,9 @@ import { useToast } from "../context/ToastContext";
 
 import {
   kirimKunjungan,
-  simpanIdTerakhir,
-  ambilIdTerakhir,
-  hapusIdTerakhir,
+  simpanKunjungan,
+  ambilKunjunganTersimpan,
+  hapusKunjunganTersimpan,
   cekStatusKunjungan,
 } from "../api/storage";
 
@@ -31,24 +31,25 @@ export default function FormMasuk() {
 
   useEffect(() => {
     async function cekKunjunganAktif() {
-      const idTerakhir = ambilIdTerakhir();
+      const tersimpan = ambilKunjunganTersimpan();
 
-      if (!idTerakhir) return;
+      if (!tersimpan) return;
 
       try {
-        const kunjungan = await cekStatusKunjungan(idTerakhir);
+        const kunjungan = await cekStatusKunjungan(tersimpan.id, tersimpan.kode);
 
         if (
           kunjungan.status === "Menunggu Persetujuan" ||
           kunjungan.status === "Diterima"
         ) {
-          navigate("/form-keluar");
+          navigate(`/status/${tersimpan.id}#${tersimpan.kode}`);
           return;
         }
 
-        hapusIdTerakhir();
-      } catch {
-        hapusIdTerakhir();
+        hapusKunjunganTersimpan();
+      } catch (err) {
+        // Hanya hapus jika memang tidak ditemukan — bukan saat jaringan putus
+        if (err.status === 404) hapusKunjunganTersimpan();
       }
     }
 
@@ -86,11 +87,11 @@ export default function FormMasuk() {
         unitKerja: unitKerja.trim(),
         keperluan: keperluan.trim(),
       });
-      simpanIdTerakhir(tamuBaru.id);
-      // Redirect ke halaman status miliknya sendiri, berdasarkan id_pengunjung.
-      // Halaman ini juga jadi bookmark/link yang bisa dibuka ulang kapan saja
-      // untuk cek status atau lanjut ke Form Keluar.
-      navigate(`/status/${tamuBaru.id}`);
+      simpanKunjungan(tamuBaru.id, tamuBaru.kodeAkses);
+      // Redirect ke halaman status miliknya sendiri. Kode akses ditaruh di
+      // bagian "#" URL (tidak pernah dikirim ke server/log), sehingga link
+      // ini bisa di-bookmark untuk cek status atau lanjut ke Form Keluar.
+      navigate(`/status/${tamuBaru.id}#${tamuBaru.kodeAkses}`);
     } catch (err) {
       tampilkanToast(err.message);
     } finally {
@@ -122,6 +123,7 @@ export default function FormMasuk() {
                       className="guest-name-input"
                       required={index === 0}
                       placeholder="Masukkan nama lengkap"
+                      maxLength={100}
                       value={nama}
                       onChange={(e) => ubahNama(index, e.target.value)}
                     />
@@ -137,9 +139,11 @@ export default function FormMasuk() {
                   </div>
                 ))}
               </div>
+              {namaTamu.length < 30 && (
               <button type="button" className="btn-add-name" onClick={tambahKolomNama}>
                 + Tambah Nama (jika rombongan)
               </button>
+              )}
             </div>
             <div className="field">
               <label htmlFor="unitKerja">Unit Kerja / Instansi</label>
@@ -147,6 +151,7 @@ export default function FormMasuk() {
                 id="unitKerja"
                 required
                 placeholder="Masukkan unit kerja / instansi"
+                maxLength={150}
                 value={unitKerja}
                 onChange={(e) => setUnitKerja(e.target.value)}
               />
@@ -157,6 +162,7 @@ export default function FormMasuk() {
                 id="keperluan"
                 required
                 placeholder="Tuliskan keperluan kunjungan"
+                maxLength={1000}
                 value={keperluan}
                 onChange={(e) => setKeperluan(e.target.value)}
               />

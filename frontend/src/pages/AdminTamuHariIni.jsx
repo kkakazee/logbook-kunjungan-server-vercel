@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { muatDataTamu } from "../api/storage";
-import socket from "../api/frontendSocket";
+import { muatDataTamu, catatKeluarOlehPetugas } from "../api/storage";
+import { useAutentikasiAdmin } from "../context/AutentikasiAdminContext";
+import { useToast } from "../context/ToastContext";
+import realtime from "../api/realtime";
 import StatusBadge from "../components/StatusBadge";
 import DetailKunjunganModal from "../components/DetailKunjunganModal";
 import useDocumentTitle from "../hooks/useDocumentTitle";
@@ -9,6 +11,26 @@ export default function AdminTamuHariIni() {
   useDocumentTitle("Tamu Hari Ini — BBMKG Wilayah II");
   const [daftarTamu, setDaftarTamu] = useState([]);
   const [kunjunganDetail, setKunjunganDetail] = useState(null);
+  const [memproses, setMemproses] = useState(null);
+  const { admin } = useAutentikasiAdmin();
+  const tampilkanToast = useToast();
+  const bisaCatatKeluar = admin?.role !== "utama";
+
+  async function tanganiCatatKeluar(e, v) {
+    e.stopPropagation(); // jangan buka modal detail
+    const nama = (v.namaTamu || []).join(", ");
+    if (!window.confirm(`Catat ${nama} (${v.id}) sudah keluar sekarang?`)) return;
+    setMemproses(v.id);
+    try {
+      const baru = await catatKeluarOlehPetugas(v.id);
+      setDaftarTamu((prev) => prev.map((k) => (k.id === v.id ? baru : k)));
+      tampilkanToast(`${v.id} dicatat keluar.`);
+    } catch (err) {
+      tampilkanToast(err.message);
+    } finally {
+      setMemproses(null);
+    }
+  }
 
   useEffect(() => {
     async function muatUlang() {
@@ -22,12 +44,12 @@ export default function AdminTamuHariIni() {
       muatUlang();
     }
 
-    socket.on("kunjungan:baru", tanganiPerubahan);
-    socket.on("kunjungan:diubah", tanganiPerubahan);
+    realtime.on("kunjungan:baru", tanganiPerubahan);
+    realtime.on("kunjungan:diubah", tanganiPerubahan);
 
     return () => {
-      socket.off("kunjungan:baru", tanganiPerubahan);
-      socket.off("kunjungan:diubah", tanganiPerubahan);
+      realtime.off("kunjungan:baru", tanganiPerubahan);
+      realtime.off("kunjungan:diubah", tanganiPerubahan);
     };
 
   }, []);
@@ -86,6 +108,7 @@ export default function AdminTamuHariIni() {
                 <th>Waktu Masuk</th>
                 <th>Waktu Keluar</th>
                 <th>Status</th>
+                {bisaCatatKeluar && <th>Aksi</th>}
               </tr>
             </thead>
             <tbody>
@@ -101,6 +124,23 @@ export default function AdminTamuHariIni() {
                   <td>
                     <StatusBadge status={v.status} />
                   </td>
+                  {bisaCatatKeluar && (
+                    <td>
+                      {v.status === "Diterima" ? (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-small"
+                          disabled={memproses === v.id}
+                          onClick={(e) => tanganiCatatKeluar(e, v)}
+                          title="Gunakan jika tamu kehilangan kode akses"
+                        >
+                          {memproses === v.id ? "..." : "Catat Keluar"}
+                        </button>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

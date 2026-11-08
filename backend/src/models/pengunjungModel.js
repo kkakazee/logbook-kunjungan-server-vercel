@@ -6,6 +6,7 @@
 const pool = require("../database");
 const { buatIdKunjungan } = require("../utils/buatIdKunjungan");
 const { formatTampilan, keFormatIso } = require("../utils/formatTanggal");
+const { hashKode } = require("../utils/kodeAkses");
 
 const QUERY_DASAR = `
   SELECT
@@ -71,7 +72,7 @@ async function ambilSemua() {
   return baris.map(petakanBaris);
 }
 
-async function buat({ namaTamu, unitKerja, keperluan }) {
+async function buat({ namaTamu, unitKerja, keperluan, kodeAkses }) {
   const id = await buatIdKunjungan(pool);
 
   const koneksi = await pool.getConnection();
@@ -86,20 +87,18 @@ async function buat({ namaTamu, unitKerja, keperluan }) {
          unit_kerja_instansi,
          keperluan,
          status,
-         waktu_masuk
+         waktu_masuk,
+         kode_akses_hash
        )
-       VALUES (?, ?, ?, 'Menunggu Persetujuan', UTC_TIMESTAMP())`,
-      [id, unitKerja, keperluan]
+       VALUES (?, ?, ?, 'Menunggu Persetujuan', UTC_TIMESTAMP(), ?)`,
+      [id, unitKerja, keperluan, hashKode(kodeAkses)]
     );
 
-    for (const nama of namaTamu) {
-      await koneksi.query(
-        `INSERT INTO pengunjung_nama
-         (id_pengunjung, nama)
-         VALUES (?, ?)`,
-        [id, nama]
-      );
-    }
+    // Satu query untuk semua nama (lebih cepat daripada INSERT satu per satu)
+    await koneksi.query(
+      `INSERT INTO pengunjung_nama (id_pengunjung, nama) VALUES ?`,
+      [namaTamu.map((nama) => [id, nama])]
+    );
 
     await koneksi.commit();
   } catch (err) {
@@ -114,8 +113,9 @@ async function buat({ namaTamu, unitKerja, keperluan }) {
 
 
 
-// Mengubah status sekaligus menyimpan nama petugas
-// yang melakukan verifikasi.
+// Mengubah status sekaligus menyimpan nama petugas yang memverifikasi.
+// Hanya berlaku untuk kunjungan yang masih "Menunggu Persetujuan", supaya
+// kunjungan yang sudah selesai/ditolak tidak bisa diubah ulang.
 async function ubahStatus(id, status, namaPetugas, alasanDitolak = null) {
   const [hasil] = await pool.query(
     `UPDATE pengunjung
@@ -123,7 +123,7 @@ async function ubahStatus(id, status, namaPetugas, alasanDitolak = null) {
        status = ?,
        nama_petugas_verifikasi = ?,
        alasan_ditolak = ?
-     WHERE id_pengunjung = ?`,
+     WHERE id_pengunjung = ? AND status = 'Menunggu Persetujuan'`,
     [status, namaPetugas, alasanDitolak, id]
   );
 
@@ -147,13 +147,35 @@ async function catatKeluar(id) {
      SET
        status = 'Kunjungan Selesai',
        waktu_keluar = UTC_TIMESTAMP()
-     WHERE id_pengunjung = ?`,
+     WHERE id_pengunjung = ? AND status = 'Diterima'`,
     [id]
   );
 }
 
+async function ambilHashKode(id) {
+  const [baris] = await pool.query(
+    `SELECT kode_akses_hash FROM pengunjung WHERE id_pengunjung = ?`,
+    [id]
+  );
+  return baris.length ? baris[0].kode_akses_hash : null;
+}
+
+// Penanda ringan untuk mendeteksi perubahan data (dipakai polling admin
+// sebagai pengganti Socket.IO yang tidak didukung Vercel).
+async function ambilVersi() {
+  const [baris] = await pool.query(
+    `SELECT COUNT(*) AS n,
+            COALESCE(SUM(CRC32(CONCAT_WS('|', id_pengunjung, status,
+                     IFNULL(waktu_keluar, '')))), 0) AS h
+     FROM pengunjung`
+  );
+  return `${baris[0].n}-${baris[0].h}`;
+}
+
 module.exports = {
   cariById,
+  ambilHashKode,
+  ambilVersi,
   ambilSemua,
   buat,
   ubahStatus,

@@ -1,61 +1,40 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import api, { KUNCI_TOKEN } from "../api/client";
+import api from "../api/client";
 
-const KUNCI_ADMIN = "bbmkg_admin";
 const AutentikasiAdminContext = createContext(null);
 
 export function AutentikasiProvider({ children }) {
-  const [admin, setAdmin] = useState(() => {
-    const tersimpan = localStorage.getItem(KUNCI_ADMIN);
-    return tersimpan ? JSON.parse(tersimpan) : null;
-  });
-  // Selama true, kita belum tahu pasti sesi ini valid atau tidak —
-  // ProteksiRute harus menunggu ini selesai sebelum memutuskan
-  // redirect ke /login atau tidak.
+  const [admin, setAdmin] = useState(null);
+  // Selama true, status sesi belum diketahui — ProteksiRute menunggu dulu
+  // sebelum memutuskan redirect ke /login.
   const [memuatSesi, setMemuatSesi] = useState(true);
 
-  // Setiap kali aplikasi dimuat/di-refresh, verifikasi ulang ke server
-  // apakah token yang tersimpan MASIH valid — bukan cuma percaya data
-  // localStorage begitu saja. Ini yang memperbaiki kasus "server di-restart
-  // tapi masih bisa akses halaman admin".
+  // Sesi disimpan di cookie httpOnly; satu-satunya cara tahu sesi masih
+  // valid adalah bertanya ke server.
   useEffect(() => {
-    async function verifikasiSesi() {
-      const token = localStorage.getItem(KUNCI_TOKEN);
-      if (!token) {
-        setAdmin(null);
-        setMemuatSesi(false);
-        return;
-      }
-      try {
-        const res = await api.get("/admin/saya");
-        setAdmin(res.data);
-        localStorage.setItem(KUNCI_ADMIN, JSON.stringify(res.data));
-      } catch {
-        // Token tidak valid, sudah expired, atau server tidak bisa dihubungi
-        // sama sekali — dianggap tidak login, paksa ke halaman login lagi.
-        localStorage.removeItem(KUNCI_TOKEN);
-        localStorage.removeItem(KUNCI_ADMIN);
-        setAdmin(null);
-      } finally {
-        setMemuatSesi(false);
-      }
-    }
-    verifikasiSesi();
+    let batal = false;
+    api
+      .get("/admin/saya")
+      .then((res) => !batal && setAdmin(res.data))
+      .catch(() => !batal && setAdmin(null))
+      .finally(() => !batal && setMemuatSesi(false));
+    return () => {
+      batal = true;
+    };
   }, []);
 
   async function login(username, password) {
     const res = await api.post("/admin/login", { username, password });
-    const { token, admin: dataAdmin } = res.data;
-    localStorage.setItem(KUNCI_TOKEN, token);
-    localStorage.setItem(KUNCI_ADMIN, JSON.stringify(dataAdmin));
-    setAdmin(dataAdmin);
-    return dataAdmin;
+    setAdmin(res.data.admin);
+    return res.data.admin;
   }
 
-  function logout() {
-    localStorage.removeItem(KUNCI_TOKEN);
-    localStorage.removeItem(KUNCI_ADMIN);
-    setAdmin(null);
+  async function logout() {
+    try {
+      await api.post("/admin/logout");
+    } finally {
+      setAdmin(null);
+    }
   }
 
   return (
@@ -67,6 +46,7 @@ export function AutentikasiProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAutentikasiAdmin() {
   const ctx = useContext(AutentikasiAdminContext);
   if (!ctx) {

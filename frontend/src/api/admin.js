@@ -16,7 +16,7 @@ export async function tambahAdmin({ username, password, namaPetugas }) {
     });
     return res.data;
   } catch (err) {
-    throw new Error(pesanError(err, "Gagal menambahkan admin."));
+    throw new Error(pesanError(err, "Gagal menambahkan admin."), { cause: err });
   }
 }
 
@@ -27,7 +27,7 @@ export async function ambilSemuaAdmin() {
     const res = await api.get("/admin/semua");
     return res.data;
   } catch (err) {
-    throw new Error(pesanError(err, "Gagal mengambil data admin."));
+    throw new Error(pesanError(err, "Gagal mengambil data admin."), { cause: err });
   }
 }
 
@@ -38,7 +38,7 @@ export async function hapusAdmin(id) {
     const res = await api.delete(`/admin/${id}`);
     return res.data;
   } catch (err) {
-    throw new Error(pesanError(err, "Gagal menghapus admin."));
+    throw new Error(pesanError(err, "Gagal menghapus admin."), { cause: err });
   }
 }
 
@@ -51,6 +51,6 @@ export async function gantiPassword({ passwordLama, passwordBaru }) {
     });
     return res.data;
   } catch (err) {
-    throw new Error(pesanError(err, "Gagal mengganti password."));
+    throw new Error(pesanError(err, "Gagal mengganti password."), { cause: err });
   }
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { useAutentikasiAdmin } from "../context/AutentikasiAdminContext";
 import { muatDataTamu, ubahStatusKunjungan } from "../api/storage";
-import socket from "../api/frontendSocket";
+import realtime from "../api/realtime";
 import StatusBadge from "../components/StatusBadge";
 import DetailKunjunganModal from "../components/DetailKunjunganModal";
 import TolakKunjunganModal from "../components/TolakKunjunganModal";
@@ -40,12 +40,12 @@ export default function AdminTamuMenunggu() {
       muatUlang();
     }
 
-    socket.on("kunjungan:baru", tanganiPerubahan);
-    socket.on("kunjungan:diubah", tanganiPerubahan);
+    realtime.on("kunjungan:baru", tanganiPerubahan);
+    realtime.on("kunjungan:diubah", tanganiPerubahan);
 
     return () => {
-      socket.off("kunjungan:baru", tanganiPerubahan);
-      socket.off("kunjungan:diubah", tanganiPerubahan);
+      realtime.off("kunjungan:baru", tanganiPerubahan);
+      realtime.off("kunjungan:diubah", tanganiPerubahan);
     };
 
   }, []);

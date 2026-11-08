@@ -1,41 +1,34 @@
 import axios from "axios";
 
-const KUNCI_TOKEN = "bbmkg_token";
-
-// baseURL relatif "/api" — dikombinasikan dengan proxy di vite.config.js
-// yang meneruskan /api ke http://localhost:3001. Ini menghindari masalah
-// CORS saat development, dan kalau nanti deploy tinggal proxy-nya diarahkan
-// ke domain backend produksi, kode di sini tidak perlu diubah.
+// baseURL relatif "/api":
+//  - development: diteruskan Vite ke http://localhost:3001 (vite.config.js)
+//  - produksi (Vercel/Render): domain yang sama dengan frontend
+//
+// Sesi admin disimpan di cookie httpOnly yang diatur server, jadi token
+// TIDAK pernah disentuh JavaScript (aman dari pencurian lewat XSS).
 const api = axios.create({
   baseURL: "/api",
+  withCredentials: true,
+  timeout: 15000,
 });
 
-// Sebelum tiap request dikirim, tempelkan token JWT (kalau ada) ke header
-// Authorization — jadi setiap pemanggil axios tidak perlu urus ini manual.
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(KUNCI_TOKEN);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Kalau server balas 401 (token tidak valid/sudah habis), otomatis hapus
-// token lama dan lempar ke halaman login — supaya user tidak nyangkut di
-// halaman admin dengan sesi yang sudah mati.
+// Kalau sesi admin habis (401) saat berada di halaman admin, arahkan ke
+// halaman login. Halaman publik (tamu) tidak ikut di-redirect.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem(KUNCI_TOKEN);
-      localStorage.removeItem("bbmkg_admin");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+    if (
+      error.response?.status === 401 &&
+      window.location.pathname.startsWith("/admin")
+    ) {
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }
 );
 
+export function pesanError(err, default_) {
+  return err?.response?.data?.error || default_;
+}
+
 export default api;
-export { KUNCI_TOKEN };
