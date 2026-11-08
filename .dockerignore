@@ -1,0 +1,12 @@
+node_modules
+frontend/node_modules
+frontend/dist
+.env
+.env.*
+*.pem
+.git
+.vercel
+backup
+logs
+data
+*.log

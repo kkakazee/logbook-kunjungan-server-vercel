@@ -595,6 +595,8 @@ Halaman developer berisi:
 
 Aplikasi siap di-deploy ke **Vercel** (gratis) dengan database **Aiven MySQL**, atau ke Render/Railway/VPS sebagai server Node biasa. Lihat [DEPLOY.md](DEPLOY.md).
 
+Untuk menjalankan aplikasi **dan** database di **Raspberry Pi / server Linux dengan Docker** (MySQL 8.4 + Cloudflare Tunnel ke **https://logbook-tamu.jkbw2.my.id**), lihat [deploy/raspberry/PANDUAN-RASPBERRY.md](deploy/raspberry/PANDUAN-RASPBERRY.md).
+
 Untuk menjalankan aplikasi **dan** database di **PC Windows yang menyala 24 jam** dengan domain **https://logbook-tamu.jkbw2.my.id** (Cloudflare Tunnel, backup harian otomatis), lihat [deploy/windows/PANDUAN-PC-WINDOWS.md](deploy/windows/PANDUAN-PC-WINDOWS.md).
 
 Perintah database:

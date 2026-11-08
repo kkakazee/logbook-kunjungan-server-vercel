@@ -1,0 +1,75 @@
+# Logbook Jarkom — server sendiri (Raspberry Pi / Linux) dengan Docker.
+#   docker compose up -d --build
+# Semua pengaturan dibaca dari file .env di folder yang sama.
+# Lihat deploy/raspberry/PANDUAN-RASPBERRY.md
+
+name: logbook
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?isi DB_ROOT_PASSWORD di .env}
+      MYSQL_DATABASE: ${DB_NAME:-logbook}
+      MYSQL_USER: ${DB_USER:-logbook}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?isi DB_PASSWORD di .env}
+      TZ: UTC
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb-buffer-pool-size=256M
+    volumes:
+      - ${LOGBOOK_DATA_DIR:-./data}/mysql:/var/lib/mysql
+    # Tidak ada "ports": database TIDAK bisa diakses dari luar Docker
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  app:
+    build:
+      context: .
+      args:
+        VITE_LOKASI_AKTIF: ${VITE_LOKASI_AKTIF:-true}
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-logbook}
+      DB_USER: ${DB_USER:-logbook}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?isi JWT_SECRET di .env}
+      LOKASI_AKTIF: ${LOKASI_AKTIF:-true}
+      LOKASI_LAT: ${LOKASI_LAT:-}
+      LOKASI_LNG: ${LOKASI_LNG:-}
+      LOKASI_RADIUS_METER: ${LOKASI_RADIUS_METER:-200}
+      DB_PORT: "3306"
+      DB_SSL: "false"
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3001"
+      # cloudflared berada di jaringan Docker yang sama (alamat 172.x)
+      TRUST_PROXY: loopback,uniquelocal
+      IP_HEADER: cf-connecting-ip
+    depends_on:
+      db:
+        condition: service_healthy
+    # Hanya bisa dibuka dari Raspberry itu sendiri (untuk pengecekan);
+    # akses publik lewat Cloudflare Tunnel.
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - ${LOGBOOK_DATA_DIR:-./data}/backup:/backup
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - app
+    # Aktif hanya jika .env berisi COMPOSE_PROFILES=tunnel (setelah token diisi)
+    profiles: ["tunnel"]
