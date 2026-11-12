@@ -328,5 +328,5 @@ Detail hasil audit keamanan: [DEPLOY.md → Perubahan keamanan](DEPLOY.md#peruba
 ---
 
 ## Tim Pengembang
-
-Dikembangkan oleh **Tim Magang Unit Jaringan Komunikasi BBMKG Wilayah II — 2026**.
+Dibuat oleh **Tim Magang Tahun 2026 di Unit Jaringan Komunikasi BBMKG Wilayah II**.
+Dikembangkan oleh **Tim Jaringan Komunikasi BBMKG Wilayah II — 2026**.
