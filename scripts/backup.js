@@ -2,14 +2,65 @@
 // Backup seluruh tabel database ke file .sql (bisa diimpor ulang) dan .json.
 //   npm run db:backup                 → simpan ke folder ./backup
 //   npm run db:backup -- D:\Backup    → simpan ke folder lain
-// Hanya MEMBACA database. Menyimpan 30 backup terakhir, yang lebih lama dihapus.
+// Hanya MEMBACA database.
+//
+// Rotasi backup bertingkat (agar tidak menumpuk tapi tetap bisa mundur jauh):
+//   - 7 backup harian terakhir           (BACKUP_HARIAN, default 7)
+//   - 1 per minggu untuk 4 minggu         (BACKUP_MINGGUAN, default 4)
+//   - 1 per bulan untuk 12 bulan          (BACKUP_BULANAN, default 12)
+// Total maksimal ±23 backup (.sql + .json). Yang lain dihapus otomatis.
 
 const fs = require("fs");
 const path = require("path");
 const pool = require("../backend/src/database");
 
-const SIMPAN_MAKS = 30;
+function angkaEnv(nama, bawaan) {
+  const n = parseInt(process.env[nama], 10);
+  return Number.isInteger(n) && n >= 0 ? n : bawaan;
+}
+
+const SIMPAN_HARIAN = angkaEnv("BACKUP_HARIAN", 7);
+const SIMPAN_MINGGUAN = angkaEnv("BACKUP_MINGGUAN", 4);
+const SIMPAN_BULANAN = angkaEnv("BACKUP_BULANAN", 12);
 const OUT = path.resolve(process.argv[2] || path.join(__dirname, "../backup"));
+
+// Tanggal WIB "YYYY-MM-DD" dari stempel nama file (stempel ditulis dalam UTC)
+function tanggalWib(stamp) {
+  const [tgl, jam] = stamp.split("T");
+  const utc = new Date(`${tgl}T${jam.slice(0, 8).replace(/-/g, ":")}Z`);
+  return new Date(utc.getTime() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+// Kunci minggu: tanggal hari Senin di minggu tersebut
+function kunciMinggu(ymd) {
+  const d = new Date(`${ymd}T00:00:00Z`);
+  const mundur = (d.getUTCDay() + 6) % 7; // Senin = 0
+  return new Date(d.getTime() - mundur * 86400000).toISOString().slice(0, 10);
+}
+
+// Menentukan stempel backup mana yang disimpan. `stempel` sudah urut terbaru dulu.
+// Untuk tiap tingkat: ambil backup TERBARU dari tiap hari/minggu/bulan,
+// sebanyak N hari/minggu/bulan terakhir.
+function pilihYangDisimpan(stempel, { harian, mingguan, bulanan }) {
+  const simpan = new Set();
+  const tingkat = [
+    [harian, (ymd) => ymd],
+    [mingguan, kunciMinggu],
+    [bulanan, (ymd) => ymd.slice(0, 7)],
+  ];
+  for (const [jumlah, kunci] of tingkat) {
+    const sudah = new Set();
+    for (const s of stempel) {
+      if (sudah.size >= jumlah) break;
+      const k = kunci(tanggalWib(s));
+      if (!sudah.has(k)) {
+        sudah.add(k);
+        simpan.add(s);
+      }
+    }
+  }
+  return simpan;
+}
 
 function literal(v) {
   if (v === null || v === undefined) return "NULL";
@@ -58,18 +109,34 @@ async function main() {
     fs.writeFileSync(`${dasar}.json`, JSON.stringify(json, null, 2));
     console.log(`Backup tersimpan: ${dasar}.sql`);
 
-    // Rotasi: hapus backup lama, simpan SIMPAN_MAKS terakhir
-    const lama = fs
-      .readdirSync(OUT)
-      .filter((f) => /^backup-.*\.(sql|json)$/.test(f))
-      .sort()
-      .reverse()
-      .slice(SIMPAN_MAKS * 2);
-    for (const f of lama) fs.unlinkSync(path.join(OUT, f));
-    if (lama.length) console.log(`Menghapus ${lama.length} file backup lama.`);
+    rotasi();
   } finally {
     conn.release();
   }
+}
+
+// Rotasi: hapus backup di luar jatah harian/mingguan/bulanan
+function rotasi() {
+  const POLA = /^backup-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})\.(sql|json)$/;
+  const file = fs.readdirSync(OUT).filter((f) => POLA.test(f));
+  const stempel = [...new Set(file.map((f) => f.match(POLA)[1]))].sort().reverse();
+  const simpan = pilihYangDisimpan(stempel, {
+    harian: SIMPAN_HARIAN,
+    mingguan: SIMPAN_MINGGUAN,
+    bulanan: SIMPAN_BULANAN,
+  });
+  const hapus = file.filter((f) => !simpan.has(f.match(POLA)[1]));
+  for (const f of hapus) fs.unlinkSync(path.join(OUT, f));
+  console.log(
+    `Rotasi: ${simpan.size} backup disimpan` +
+      (hapus.length ? `, ${hapus.length} file lama dihapus.` : ".")
+  );
+}
+
+if (require.main !== module) {
+  // Dipakai oleh pengujian: require("./backup.js") tidak menjalankan backup
+  module.exports = { pilihYangDisimpan, tanggalWib, kunciMinggu };
+  return;
 }
 
 main()

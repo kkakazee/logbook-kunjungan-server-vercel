@@ -236,7 +236,7 @@ Yang terpasang:
 - **Logbook Jarkom - Server** — menyala saat PC hidup (tanpa perlu login
   Windows), restart otomatis bila berhenti. Log: `C:\logbook\logs\server.log`
 - **Logbook Jarkom - Backup** — setiap hari 23:00 ke `C:\logbook\backup`
-  (menyimpan 30 backup terakhir).
+  (rotasi otomatis: 7 harian + 4 mingguan + 12 bulanan).
 
 Agar backup juga tersimpan di luar PC (disarankan), arahkan ke folder yang
 disinkron Google Drive / OneDrive / NAS, contoh:

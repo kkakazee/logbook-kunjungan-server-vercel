@@ -267,7 +267,24 @@ Jika berhasil, pasang jadwal jam 23:00:
 crontab -l
 ```
 
-Backup tersimpan di `LOGBOOK_DATA_DIR/backup` (30 terakhir).
+Backup tersimpan di `LOGBOOK_DATA_DIR/backup` dan dirotasi otomatis agar
+tidak menumpuk:
+
+| Tingkat | Disimpan | Keterangan |
+|---|---|---|
+| Harian | 7 terakhir | backup tiap malam selama seminggu |
+| Mingguan | 4 terakhir | backup terakhir tiap minggu (±1 bulan) |
+| Bulanan | 12 terakhir | backup terakhir tiap bulan (±1 tahun) |
+
+Total maksimal ±23 backup; yang lain terhapus sendiri setiap kali backup
+berjalan. Log `logs/backup.log` dibatasi 1000 baris terakhir.
+
+Rotasi hanya menyentuh file bernama `backup-*.sql` / `backup-*.json`. Backup yang
+ingin disimpan permanen (mis. data awal dari Aiven) cukup diganti namanya,
+contoh `arsip-aiven-2026-11-08.sql`.
+
+Ingin jumlah lain? Tambahkan ke `.env`, mis. `BACKUP_HARIAN=14`, lalu
+`docker compose up -d`.
 **Sangat disarankan** juga menyalin backup ke luar Raspberry secara
 berkala, mis. dari laptop Windows:
 

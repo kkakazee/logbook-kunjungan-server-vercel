@@ -53,6 +53,10 @@ services:
       # cloudflared berada di jaringan Docker yang sama (alamat 172.x)
       TRUST_PROXY: loopback,uniquelocal
       IP_HEADER: cf-connecting-ip
+      # Rotasi backup (scripts/backup.js): berapa backup harian/mingguan/bulanan disimpan
+      BACKUP_HARIAN: ${BACKUP_HARIAN:-7}
+      BACKUP_MINGGUAN: ${BACKUP_MINGGUAN:-4}
+      BACKUP_BULANAN: ${BACKUP_BULANAN:-12}
     depends_on:
       db:
         condition: service_healthy
